@@ -20,3 +20,7 @@ body
     outline: none;
     pointer-events: none;
 }
+
+#file {
+    color: white;
+}
