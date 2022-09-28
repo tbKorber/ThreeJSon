@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'dat.gui'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 
 // Debug
 const gui = new dat.GUI()
@@ -61,12 +62,20 @@ var importedObjs = new THREE.Group()
 importedObjs.name = "importedObjs"
 scene.add(importedObjs)
 
+const directionLight = new THREE.DirectionalLight(0xFFFFFF, 1)
+directionLight.position.set(0,0, 2)
+scene.add(directionLight)
+directionLight.target = importedObjs
+
 //
 // Real stuff
 //
 
 const fileReader = new FileReader()
 const gltfLoader = new GLTFLoader()
+const dracoLoader = new DRACOLoader()
+dracoLoader.setDecoderPath('https://threejs.org/examples/js/libs/draco/%27')
+gltfLoader.setDRACOLoader(dracoLoader);
 
 const fileInput = document.getElementById('file')
 var selectedFile
@@ -84,15 +93,15 @@ fileInput.onchange = () => {
     }
 }
 
-function clearImportedObjs(obj){
+function ClearImportedObjs(obj){
     if(obj.children.length > 0)
     {
         obj.children.forEach(element => {
-            clearImportedObjs(element)
+            ClearImportedObjs(element)
         });
     }
     console.log(obj, obj.children.length > 0)
-    if(obj.isMesh) {
+    if(obj.mesh) {
         obj.geometry.dispose()
         obj.material.dispose()
     }
@@ -102,41 +111,41 @@ function clearImportedObjs(obj){
     }
 }
 
+async function LoadModels(obj){
+    let data = await gltfLoader.loadAsync(obj.path)
+    let model = data.scene.children[0]
+    model.position.set(
+        obj.mesh.position[0], // x
+        obj.mesh.position[1], // y
+        obj.mesh.position[2]  // z
+    )
+    model.rotation.set(
+        THREE.MathUtils.degToRad(obj.mesh.rotation[0]), // x
+        THREE.MathUtils.degToRad(obj.mesh.rotation[1]), // y
+        THREE.MathUtils.degToRad(obj.mesh.rotation[2])  // z
+    )
+    model.scale.set(
+        obj.mesh.scale[0], // x
+        obj.mesh.scale[1], // y
+        obj.mesh.scale[2]  // z
+    )
+    model.name = obj.name
+    importedObjs.add(model)
+}
+
 const fileButton = document.getElementById('uploadButton')
 fileButton.onclick = () => {
-    clearImportedObjs(importedObjs)
+    ClearImportedObjs(importedObjs)
     JSONObj.forEach(element => {
         switch(element.type){
             case 'glb':
             case 'gltf':
-                gltfLoader.load(
-                    element.path,
-                    function (gltf) {
-                        var mesh = gltf.scene
-                        mesh.position.set(
-                            element.mesh.position[0], // x
-                            element.mesh.position[1], // y
-                            element.mesh.position[2]  // z
-                        )
-                        mesh.rotation.set(
-                            THREE.MathUtils.degToRad(element.mesh.rotation[0]), // x
-                            THREE.MathUtils.degToRad(element.mesh.rotation[1]), // y
-                            THREE.MathUtils.degToRad(element.mesh.rotation[2])  // z
-                        )
-                        mesh.scale.set(
-                            element.mesh.scale[0], // x
-                            element.mesh.scale[1], // y
-                            element.mesh.scale[2]  // z
-                        )
-                        mesh.name = element.name
-                        importedObjs.add(mesh)
-                    }
-                )
+                LoadModels(element)
                 break
         }
     })
-    console.log(importedObjs)
-    console.log(scene)
+    // console.log(importedObjs)
+    // console.log(scene)
 };
 
 const clock = new THREE.Clock()

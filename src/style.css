@@ -24,3 +24,8 @@ body
 #file {
     color: white;
 }
+
+.import *{
+    font-family: 'Consolas';
+    font-size: .9rem;
+}
