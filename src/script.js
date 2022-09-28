@@ -27,7 +27,7 @@ const sizes = {
  */
 // Base camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.set(0,0,2)
+camera.position.set(0,0,5)
 scene.add(camera)
 
 // Controls
@@ -39,7 +39,8 @@ scene.add(camera)
  */
 const renderer = new THREE.WebGLRenderer({
     canvas: canvas,
-    alpha: true
+    alpha: true,
+    antialias: true
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -58,14 +59,14 @@ window.addEventListener('resize', () =>
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
 
-var importedObjs = new THREE.Group()
-importedObjs.name = "importedObjs"
-scene.add(importedObjs)
+var importScene = new THREE.Group()
+importScene.name = "importedScene"
+scene.add(importScene)
 
 const directionLight = new THREE.DirectionalLight(0xFFFFFF, 1)
 directionLight.position.set(0,0, 2)
 scene.add(directionLight)
-directionLight.target = importedObjs
+directionLight.target = importScene
 
 //
 // Real stuff
@@ -94,52 +95,66 @@ fileInput.onchange = () => {
 }
 
 function ClearImportedObjs(obj){
+    console.log(obj.name, obj.children.length > 0, obj)
+    // iterate through each child object to start from bottom up
     if(obj.children.length > 0)
     {
-        obj.children.forEach(element => {
-            ClearImportedObjs(element)
-        });
+        for( let i = obj.children.length - 1; i >= 0; i--){
+            ClearImportedObjs(obj.children[i])
+        }
     }
-    console.log(obj, obj.children.length > 0)
+    // dispose memory of mesh
     if(obj.mesh) {
         obj.geometry.dispose()
         obj.material.dispose()
     }
+    // if the parent isn't 'scene' (essentially if obj isn't importScene remove the object itself)
     if(obj.parent != scene)
     {
         obj.parent.remove(obj)
     }
+    console.log(scene.children)
 }
 
 async function LoadModels(obj){
+    // Load GLTF data
     let data = await gltfLoader.loadAsync(obj.path)
+    // Ref Model
     let model = data.scene.children[0]
+    // Set Model Position xyz (Vector3)
     model.position.set(
         obj.mesh.position[0], // x
         obj.mesh.position[1], // y
         obj.mesh.position[2]  // z
     )
+    // Set Model Rotation xyz (Vector3) Input: Degrees, Output: Radians
     model.rotation.set(
         THREE.MathUtils.degToRad(obj.mesh.rotation[0]), // x
         THREE.MathUtils.degToRad(obj.mesh.rotation[1]), // y
         THREE.MathUtils.degToRad(obj.mesh.rotation[2])  // z
     )
+    // Set Model Scale xyz (Vector3)
     model.scale.set(
         obj.mesh.scale[0], // x
         obj.mesh.scale[1], // y
         obj.mesh.scale[2]  // z
     )
+    // Set Model name (for debug)
     model.name = obj.name
-    importedObjs.add(model)
+    // Attach Object to importScene
+    importScene.add(model)
 }
 
 const fileButton = document.getElementById('uploadButton')
 fileButton.onclick = () => {
-    ClearImportedObjs(importedObjs)
+    // Clear Previous Models for next Load
+    ClearImportedObjs(importScene)
+    // Read JSON and for each object build
     JSONObj.forEach(element => {
         switch(element.type){
             case 'glb':
             case 'gltf':
+                // Async load
                 LoadModels(element)
                 break
         }
@@ -147,6 +162,11 @@ fileButton.onclick = () => {
     // console.log(importedObjs)
     // console.log(scene)
 };
+
+const clearButton = document.getElementById('clearButton')
+clearButton.onclick = () => {
+    ClearImportedObjs(importScene)
+}
 
 const clock = new THREE.Clock()
 
