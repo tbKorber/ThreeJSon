@@ -6,11 +6,13 @@
     <title>ThreeJS Starter</title>
 </head>
 <body>
-    <canvas class="webgl"></canvas>
     <div class="import">
         <input type="file" accept=".json" id="file"> <br>
-        <button id="uploadButton" title="Builds Scene from .json">Build</button>
-        <button id="clearButton" title="Clears scene">Clear</button>
+        <button id="uploadButton" title="Builds Scene from .json">Build Scene</button>
+        <label title="Build Asynchronously">Async?</label>
+        <input type="checkbox" id="asyncCheckbox" title="Build Asynchronously" checked> <br>
+        <button id="clearButton" title="Clears scene">Clear Scene</button>
     </div>
+    <canvas class="webgl"></canvas>
 </body>
 </html>

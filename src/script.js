@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'dat.gui'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 
 // Debug
 const gui = new dat.GUI()
@@ -26,20 +26,20 @@ const sizes = {
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
+const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 500)
 camera.position.set(0,0,5)
 scene.add(camera)
 
 // Controls
-// const controls = new OrbitControls(camera, canvas)
-// controls.enableDamping = true
+const controls = new OrbitControls(camera, canvas)
+controls.enableDamping = true
 
 /**
  * Renderer
  */
 const renderer = new THREE.WebGLRenderer({
     canvas: canvas,
-    alpha: true,
+    alpha: false,
     antialias: true
 })
 renderer.setSize(sizes.width, sizes.height)
@@ -63,10 +63,8 @@ var importScene = new THREE.Group()
 importScene.name = "importedScene"
 scene.add(importScene)
 
-const directionLight = new THREE.DirectionalLight(0xFFFFFF, 1)
-directionLight.position.set(0,0, 2)
-scene.add(directionLight)
-directionLight.target = importScene
+const gridHelper = new THREE.GridHelper(50,50,0xFFFFFF)
+scene.add(gridHelper)
 
 //
 // Real stuff
@@ -75,7 +73,7 @@ directionLight.target = importScene
 const fileReader = new FileReader()
 const gltfLoader = new GLTFLoader()
 const dracoLoader = new DRACOLoader()
-dracoLoader.setDecoderPath('https://threejs.org/examples/js/libs/draco/%27')
+dracoLoader.setDecoderPath('https://threejs.org/examples/js/libs/draco/')
 gltfLoader.setDRACOLoader(dracoLoader);
 
 const fileInput = document.getElementById('file')
@@ -95,7 +93,6 @@ fileInput.onchange = () => {
 }
 
 function ClearImportedObjs(obj){
-    console.log(obj.name, obj.children.length > 0, obj)
     // iterate through each child object to start from bottom up
     if(obj.children.length > 0)
     {
@@ -113,53 +110,146 @@ function ClearImportedObjs(obj){
     {
         obj.parent.remove(obj)
     }
-    console.log(scene.children)
 }
 
-async function LoadModels(obj){
+function setTransform(jsonobj, target) {
+    // Set Target Position xyz (Vector3)
+    target.position.set(
+        jsonobj.mesh.position[0], // x
+        jsonobj.mesh.position[1], // y
+        jsonobj.mesh.position[2]  // z
+    )
+    // Set Target Rotation xyz (Vector3) Input: Degrees, Output: Radians
+    target.rotation.set(
+        THREE.MathUtils.degToRad(jsonobj.mesh.rotation[0]), // x
+        THREE.MathUtils.degToRad(jsonobj.mesh.rotation[1]), // y
+        THREE.MathUtils.degToRad(jsonobj.mesh.rotation[2])  // z
+    )
+    // Set Target Scale xyz (Vector3)
+    target.scale.set(
+        jsonobj.mesh.scale[0], // x
+        jsonobj.mesh.scale[1], // y
+        jsonobj.mesh.scale[2]  // z
+    )
+}
+
+async function asyncLoadModels(jsonobj){
     // Load GLTF data
-    let data = await gltfLoader.loadAsync(obj.path)
+    let data = await gltfLoader.loadAsync(jsonobj.path)
     // Ref Model
     let model = data.scene.children[0]
-    // Set Model Position xyz (Vector3)
-    model.position.set(
-        obj.mesh.position[0], // x
-        obj.mesh.position[1], // y
-        obj.mesh.position[2]  // z
-    )
-    // Set Model Rotation xyz (Vector3) Input: Degrees, Output: Radians
-    model.rotation.set(
-        THREE.MathUtils.degToRad(obj.mesh.rotation[0]), // x
-        THREE.MathUtils.degToRad(obj.mesh.rotation[1]), // y
-        THREE.MathUtils.degToRad(obj.mesh.rotation[2])  // z
-    )
-    // Set Model Scale xyz (Vector3)
-    model.scale.set(
-        obj.mesh.scale[0], // x
-        obj.mesh.scale[1], // y
-        obj.mesh.scale[2]  // z
-    )
+    // Set Model Transform
+    setTransform(jsonobj, model)
     // Set Model name (for debug)
-    model.name = obj.name
+    model.name = jsonobj.name
     // Attach Object to importScene
     importScene.add(model)
+}
+
+function normalLoadModel(jsonobj) {
+    gltfLoader.load(
+        jsonobj.path,
+        function (gltf) {
+            let mesh = gltf.scene
+            setTransform(jsonobj, mesh)
+            mesh.name = jsonobj.name
+            importScene.add(mesh)
+        }
+    )
+}
+
+function MakeLight(jsonobj) {
+    let light;
+    let color = []
+    for(let i = 0; i < jsonobj.mesh.color.length; i++) {
+        color.push("#"+jsonobj.mesh.color[i])
+    }
+    let intensity = jsonobj.mesh.intensity
+    switch(jsonobj.light){
+        case 'ambient':
+            light = new THREE.AmbientLight(color[0], intensity)
+            break
+        case 'point':
+            light = new THREE.PointLight(color[0], intensity)
+            setTransform(jsonobj, light)
+            break
+        case 'directional':
+            light = new THREE.DirectionalLight(color[0], intensity)
+            break
+        case 'hemisphere':
+            light = new THREE.HemisphereLight(color[0], color[1], intensity)
+            break
+        case 'rectarea':
+
+            break
+        case 'spotlight':
+            
+            break
+        }
+    light.name = jsonobj.name
+    importScene.add(light)
+}
+
+function MakePhysicsShape(jsonobj){
+    let physicsShape = MakeShape(jsonobj, true)
+    importScene.add(physicsShape)
+}
+
+function MakeShape(jsonobj, physics = new Boolean(false)){
+    let geometry
+    let shape
+    switch(jsonobj.shape){
+        case 'box':
+            geometry = new THREE.BoxGeometry(
+                jsonobj.geometry[0],
+                jsonobj.geometry[1],
+                jsonobj.geometry[2]
+            )
+            shape = new THREE.Mesh(geometry)
+            setTransform(jsonobj, shape)
+            break
+    }
+    if(shape != undefined)
+    {
+        shape.name = jsonobj.name
+        if(!physics){
+            console.log(shape.name, "is not physics")
+            importScene.add(shape)
+        }
+        return shape
+    }
+    console.error('Shape is declared but undefined')
 }
 
 const fileButton = document.getElementById('uploadButton')
 fileButton.onclick = () => {
     // Clear Previous Models for next Load
     ClearImportedObjs(importScene)
+    let b_async = document.querySelector('#asyncCheckbox')
     // Read JSON and for each object build
     JSONObj.forEach(element => {
         switch(element.type){
             case 'glb':
             case 'gltf':
                 // Async load
-                LoadModels(element)
+                if(!b_async.checked){
+                    normalLoadModel(element)
+                    break
+                }
+                asyncLoadModels(element)
+                break
+            case 'light':
+                MakeLight(element)
+                break
+            case 'physics':
+                MakePhysicsShape(element)
+                break;
+            case 'shape':
+                MakeShape(element)
                 break
         }
     })
-    // console.log(importedObjs)
+    console.log('imported', importScene.children)
     // console.log(scene)
 };
 
@@ -178,7 +268,7 @@ const tick = () =>
     // Update objects
 
     // Update Orbital Controls
-    // controls.update()
+    controls.update()
 
     // Render
     renderer.render(scene, camera)

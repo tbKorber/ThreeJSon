@@ -15,17 +15,16 @@ body
 .webgl
 {
     position: fixed;
-    top: 0;
     left: 0;
     outline: none;
-    pointer-events: none;
-}
-
-#file {
-    color: white;
+    /* pointer-events: none; */
 }
 
 .import *{
-    font-family: 'Consolas';
     font-size: .9rem;
+    font-family: 'Consolas';
+}
+
+.import :is(label, #file) {
+    color: white;
 }

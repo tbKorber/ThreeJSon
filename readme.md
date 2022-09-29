@@ -1,3 +1,15 @@
+# Supports ThreeJS Elements:
+``` bash
+- .gltf & .glb
+- lights
+    - ambient
+    - point
+    - directional
+    - hemishphere
+- shape
+    - Box
+```
+
 # Three.js Starter
 Courtesy of Bruno Simon of https://threejs-journey.xyz/
 
