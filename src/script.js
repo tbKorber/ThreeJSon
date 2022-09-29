@@ -160,30 +160,28 @@ function normalLoadModel(jsonobj) {
 
 function MakeLight(jsonobj) {
     let light;
-    let color = []
-    for(let i = 0; i < jsonobj.mesh.color.length; i++) {
-        color.push("#"+jsonobj.mesh.color[i])
-    }
+    let color = new THREE.Color('#'+jsonobj.mesh.color)
     let intensity = jsonobj.mesh.intensity
     switch(jsonobj.light){
         case 'ambient':
-            light = new THREE.AmbientLight(color[0], intensity)
+            light = new THREE.AmbientLight(color, intensity)
             break
         case 'point':
-            light = new THREE.PointLight(color[0], intensity)
+            light = new THREE.PointLight(color, intensity)
             setTransform(jsonobj, light)
             break
         case 'directional':
-            light = new THREE.DirectionalLight(color[0], intensity)
+            light = new THREE.DirectionalLight(color, intensity)
             break
         case 'hemisphere':
-            light = new THREE.HemisphereLight(color[0], color[1], intensity)
+            let groundColor = new THREE.Color('#'+jsonobj.mesh.groundColor)
+            light = new THREE.HemisphereLight(color, groundColor, intensity)
             break
         case 'rectarea':
-
+            // TODO
             break
         case 'spotlight':
-            
+            // TO DO
             break
         }
     light.name = jsonobj.name
@@ -207,6 +205,66 @@ function MakeShape(jsonobj, physics = new Boolean(false)){
             )
             shape = new THREE.Mesh(geometry)
             setTransform(jsonobj, shape)
+            break
+        case 'capsule':
+            // TODO
+            break
+        case 'circle':
+            // TODO
+            break
+        case 'cone':
+            // TODO
+            break
+        case 'cylinder':
+            // TODO
+            break
+        case 'dodecahedron':
+            // TODO
+            break
+        case 'edges':
+            // TODO
+            break
+        case 'extrude':
+            // TODO
+            break
+        case 'icosahedron':
+            // TODO
+            break
+        case 'lathe':
+            // TODO
+            break
+        case 'octahedron':
+            // TODO
+            break
+        case 'plane':
+            // TODO
+            break
+        case 'polyhedron':
+            // TODO
+            break
+        case 'ring':
+            // TODO
+            break
+        case 'shape':
+            // TODO
+            break
+        case 'sphere':
+            // TODO
+            break
+        case 'tetrahedron':
+            // TODO
+            break
+        case 'torus':
+            // TODO
+            break
+        case 'torusknot':
+            // TODO
+            break
+        case 'tube':
+            // TODO
+            break
+        case 'wireframe':
+            // TODO
             break
     }
     if(shape != undefined)
