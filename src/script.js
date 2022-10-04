@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'dat.gui'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
+import * as TJSON from './ThreeJSon.js'
 
 // Debug
 const gui = new dat.GUI()
@@ -59,9 +60,9 @@ window.addEventListener('resize', () =>
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
 
-var importScene = new THREE.Group()
-importScene.name = "importedScene"
-scene.add(importScene)
+var importGroup = new THREE.Group()
+importGroup.name = "importedScene"
+scene.add(importGroup)
 
 const gridHelper = new THREE.GridHelper(50,50,0xFFFFFF)
 scene.add(gridHelper)
@@ -105,7 +106,7 @@ function ClearImportedObjs(obj){
         obj.geometry.dispose()
         obj.material.dispose()
     }
-    // if the parent isn't 'scene' (essentially if obj isn't importScene remove the object itself)
+    // if the parent isn't 'scene' (essentially if obj isn't importGroup remove the object itself)
     if(obj.parent != scene)
     {
         obj.parent.remove(obj)
@@ -142,8 +143,8 @@ async function asyncLoadModels(jsonobj){
     setTransform(jsonobj, model)
     // Set Model name (for debug)
     model.name = jsonobj.name
-    // Attach Object to importScene
-    importScene.add(model)
+    // Attach Object to importGroup
+    importGroup.add(model)
 }
 
 function normalLoadModel(jsonobj) {
@@ -153,7 +154,7 @@ function normalLoadModel(jsonobj) {
             let mesh = gltf.scene
             setTransform(jsonobj, mesh)
             mesh.name = jsonobj.name
-            importScene.add(mesh)
+            importGroup.add(mesh)
         }
     )
 }
@@ -185,12 +186,12 @@ function MakeLight(jsonobj) {
             break
         }
     light.name = jsonobj.name
-    importScene.add(light)
+    importGroup.add(light)
 }
 
 function MakePhysicsShape(jsonobj){
     let physicsShape = MakeShape(jsonobj, true)
-    importScene.add(physicsShape)
+    importGroup.add(physicsShape)
 }
 
 function MakeShape(jsonobj, physics = new Boolean(false)){
@@ -272,7 +273,7 @@ function MakeShape(jsonobj, physics = new Boolean(false)){
         shape.name = jsonobj.name
         if(!physics){
             console.log(shape.name, "is not physics")
-            importScene.add(shape)
+            importGroup.add(shape)
         }
         return shape
     }
@@ -281,39 +282,50 @@ function MakeShape(jsonobj, physics = new Boolean(false)){
 
 const fileButton = document.getElementById('uploadButton')
 fileButton.onclick = () => {
-    // Clear Previous Models for next Load
-    ClearImportedObjs(importScene)
-    let b_async = document.querySelector('#asyncCheckbox')
-    // Read JSON and for each object build
-    JSONObj.forEach(element => {
-        switch(element.type){
-            case 'glb':
-            case 'gltf':
-                // Async load
-                if(!b_async.checked){
-                    normalLoadModel(element)
-                    break
-                }
-                asyncLoadModels(element)
-                break
-            case 'light':
-                MakeLight(element)
-                break
-            case 'physics':
-                MakePhysicsShape(element)
-                break;
-            case 'shape':
-                MakeShape(element)
-                break
-        }
-    })
-    console.log('imported', importScene.children)
-    // console.log(scene)
-};
+
+    TJSON.BuildScene(importGroup, JSONObj)
+    // // Clear Previous Models for next Load
+    // ClearImportedObjs(importGroup)
+    // let b_async = document.querySelector('#asyncCheckbox')
+    // // Read JSON and for each object build
+    // JSONObj.forEach(element => {
+    //     switch(element.type){
+    //         case 'glb':
+    //         case 'gltf':
+    //             // Async load
+    //             if(b_async.checked){
+    //                 asyncLoadModels(element)
+    //                 break
+    //             }
+    //             normalLoadModel(element)
+    //             break
+    //         case 'light':
+    //             MakeLight(element)
+    //             break
+    //         case 'physics':
+    //             MakePhysicsShape(element)
+    //             break;
+    //         case 'shape':
+    //             MakeShape(element)
+    //             break
+    //     }
+    // })
+    // console.log('imported', importGroup.children)
+}
+
+document.addEventListener('keypress', function ( event ) {
+    switch(event.code){
+        case 'KeyT':
+            console.log('scene:', scene)
+            console.log(JSONObj)
+            break
+    }
+})
 
 const clearButton = document.getElementById('clearButton')
 clearButton.onclick = () => {
-    ClearImportedObjs(importScene)
+    TJSON.ClearScene(scene)
+    // ClearImportedObjs(importGroup)
 }
 
 const clock = new THREE.Clock()
