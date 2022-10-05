@@ -28,3 +28,7 @@ body
 .import :is(label, #file) {
     color: white;
 }
+
+#swapButton {
+    width: 100px;
+}

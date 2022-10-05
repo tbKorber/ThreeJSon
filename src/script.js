@@ -61,7 +61,7 @@ window.addEventListener('resize', () =>
 })
 
 var importGroup = new THREE.Group()
-importGroup.name = "importedScene"
+importGroup.name = "TJSONGroup"
 scene.add(importGroup)
 
 const gridHelper = new THREE.GridHelper(50,50,0xFFFFFF)
@@ -78,8 +78,28 @@ dracoLoader.setDecoderPath('https://threejs.org/examples/js/libs/draco/')
 gltfLoader.setDRACOLoader(dracoLoader);
 
 const fileInput = document.getElementById('file')
+const urlInput = document.getElementById('url')
 var selectedFile
 var JSONObj
+var useURL = false
+
+const swapButton = document.getElementById('swapButton')
+swapButton.onclick = () => {
+    switch(swapButton.textContent){
+        case 'JSON File':
+            swapButton.textContent = 'URL'
+            fileInput.style.display = ''
+            urlInput.style.display = 'none'
+            break
+        case 'URL':
+            swapButton.textContent = 'JSON File'
+            fileInput.style.display = 'none'
+            urlInput.style.display = ''
+            break;
+    }
+    useURL = !useURL
+}
+
 fileInput.onchange = () => {
     selectedFile = fileInput.files[0]
     fileReader.readAsText(selectedFile)
@@ -95,35 +115,16 @@ fileInput.onchange = () => {
 
 const fileButton = document.getElementById('uploadButton')
 fileButton.onclick = () => {
-
-    TJSON.BuildScene(importGroup, JSONObj)
-    // // Clear Previous Models for next Load
-    // ClearImportedObjs(importGroup)
-    // let b_async = document.querySelector('#asyncCheckbox')
-    // // Read JSON and for each object build
-    // JSONObj.forEach(element => {
-    //     switch(element.type){
-    //         case 'glb':
-    //         case 'gltf':
-    //             // Async load
-    //             if(b_async.checked){
-    //                 asyncLoadModels(element)
-    //                 break
-    //             }
-    //             normalLoadModel(element)
-    //             break
-    //         case 'light':
-    //             MakeLight(element)
-    //             break
-    //         case 'physics':
-    //             MakePhysicsShape(element)
-    //             break;
-    //         case 'shape':
-    //             MakeShape(element)
-    //             break
-    //     }
-    // })
-    // console.log('imported', importGroup.children)
+    if(useURL){
+        try{
+            fetch(urlInput.value).then(response => {
+                JSONObj = JSON.parse(response.text)
+            })
+        } catch (err) {
+            console.error(err)
+        }
+    }
+    console.log(TJSON.BuildScene(importGroup, JSONObj))
 }
 
 document.addEventListener('keypress', function ( event ) {

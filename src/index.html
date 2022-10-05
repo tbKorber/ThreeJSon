@@ -6,11 +6,15 @@
     <title>ThreeJS Starter</title>
 </head>
 <body>
+    <div>
+        <button id="swapButton" title="Swap between file and URL">URL</button>
+    </div>
     <div class="import">
-        <input type="file" accept=".json" id="file"> <br>
-        <button id="uploadButton" title="Builds Scene from .json">Build Scene</button>
-        <label title="Build Asynchronously">Async?</label>
-        <input type="checkbox" id="asyncCheckbox" title="Build Asynchronously" checked> <br>
+        <div id="swapDiv">
+            <input class="swap" type="file" accept=".json" id="file">
+            <input class="swap" type="text" style="display: none;" id="url">
+        </div>
+        <button id="uploadButton" title="Builds Scene from .json">Build Scene</button><br>
         <button id="clearButton" title="Clears scene">Clear Scene</button>
     </div>
     <canvas class="webgl"></canvas>
