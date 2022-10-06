@@ -28,7 +28,8 @@ const sizes = {
  */
 // Base camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 500)
-camera.position.set(0,0,5)
+camera.position.set(2,7,15)
+camera.lookAt(0,0,0)
 scene.add(camera)
 
 // Controls
@@ -79,6 +80,8 @@ gltfLoader.setDRACOLoader(dracoLoader);
 
 const fileInput = document.getElementById('file')
 const urlInput = document.getElementById('url')
+const fileButton = document.getElementById('uploadButton')
+const clearButton = document.getElementById('clearButton')
 var selectedFile
 var JSONObj
 var useURL = false
@@ -113,7 +116,6 @@ fileInput.onchange = () => {
     }
 }
 
-const fileButton = document.getElementById('uploadButton')
 fileButton.onclick = () => {
     if(useURL){
         try{
@@ -136,7 +138,6 @@ document.addEventListener('keypress', function ( event ) {
     }
 })
 
-const clearButton = document.getElementById('clearButton')
 clearButton.onclick = () => {
     TJSON.ClearScene(scene)
     // ClearImportedObjs(importGroup)
