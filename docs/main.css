@@ -1,0 +1,36 @@
+*
+{
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body
+{
+    height: 100vh;
+    font-family: 'Poppins';
+    background: rgb(24,24,24);
+}
+
+.webgl
+{
+    position: fixed;
+    left: 0;
+    outline: none;
+    /* pointer-events: none; */
+}
+
+.import *{
+    font-size: .9rem;
+    font-family: 'Consolas';
+}
+
+.import :is(label, #file) {
+    color: white;
+}
+
+#swapButton {
+    width: 100px;
+}
+
+/*# sourceMappingURL=main.css.map*/
